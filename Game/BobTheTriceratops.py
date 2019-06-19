@@ -2,12 +2,6 @@ import arcade as ac
 import random
 from Game import game_objects
 
-# TODO
-# Add more game-over objects
-# Add death system
-# Add score system
-# Add start menu
-# ...
 
 # Screen parameters
 SC_WIDTH = 1200
@@ -56,11 +50,6 @@ initial_jump = False
 tree_x = random.randint(SC_WIDTH, 2 * SC_WIDTH)
 # x-value of tree varies between 145px and 155px
 tree_y = random.randint(145, 155)
-
-# Button
-button_scale_factor = 1
-button_width = 100
-button_height = 50
 
 # Aesthetics variables --------------------------------------------------------
 # Amount and list of initial x-values of floor "tiles"
