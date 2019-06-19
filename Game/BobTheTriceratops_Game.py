@@ -24,8 +24,6 @@ FLOOR = 50
 FLOOR_TILE_HEIGHT = 110
 FLOOR_TILE_WIDTH = 300
 
-BUTTON_POS = [SC_WIDTH / 2, SC_HEIGHT / 2 - 100]
-
 # Game variables --------------------------------------------------------------
 # Used for starting/stopping the game
 game_state = False
@@ -39,7 +37,7 @@ screen_center = SC_WIDTH / 2
 # "Difficulty" of game
 game_speed = 10
 background_speed = game_speed / 1.1
-frame_count = 0
+frame_count = 1
 
 # Player variables
 player_x = 200
@@ -50,6 +48,8 @@ hit_state = False
 player_angle = 0
 running_speed = 4
 player_score = 0
+# Tracking the "game start" jump
+initial_jump = False
 
 # x-value of tree is random
 # There is only one tree per floor "tile"
@@ -82,35 +82,31 @@ background_x = \
 
 # Constantly updating the functions
 def update(delta_time):
-    global frame_count
+    global frame_count, game_speed, frame_count
+    global background_speed, running_speed
     ac.start_render()
 
-    # If game is not playing, render titlescreen
-    if game_state is False:
-        draw_title_screen()
-        draw_start_button()
+    # Rendering aesthetics
+    draw_background()
+    draw_floor()
+    draw_bob()
 
-    else:
-        # Rendering aesthetics
-        draw_background()
-        draw_floor()
-        draw_bob()
+    # Player interactions
+    floor_boundary(FLOOR)
+    gravity(GRAVITY_CONSTANT)
+    jump(jumping)
 
-        # Player interactions
-        floor_boundary(FLOOR)
-        gravity(GRAVITY_CONSTANT)
-        jump(jumping)
+    # Moving the player and the viewport
+    viewport(screen_center)
+    move_with_screen()
 
-        # Moving the player and the viewport
-        viewport(screen_center)
-        move_with_screen()
+    # Game mechanics
+    obstacles()
+    collision()
+    score()
+    difficulty_progression()
 
-        # Game mechanics
-        obstacles()
-        collision()
-        score()
-
-        frame_count += 1
+    frame_count += 1
 
 
 # PLAYER INTERACTION ----------------------------------------------------------
@@ -198,9 +194,10 @@ def floor_boundary(y_bound):
 
 
 def keypress(symbol, modifiers):
-    global jumping
+    global jumping, initial_jump
     if symbol == ac.key.SPACE and not in_air:
         jumping = True
+        initial_jump = True
 
 
 # GAME MECHANICS --------------------------------------------------------------
@@ -251,8 +248,11 @@ def score():
 
 def difficulty_progression():
     global game_speed
-    if frame_count % 100:
-        game_speed += 2
+    # Every 100 frames, game accelerates by 1 px/s^2
+    if frame_count % 100 == 0:
+        game_speed *= 1.02
+
+    print(game_speed)
 
 
 # AESTHETICS ------------------------------------------------------------------
@@ -294,63 +294,6 @@ def draw_background():
         background_x[i] += background_speed
 
 
-# Title Screen ----------------------------------------------------------------
-def draw_title_screen():
-    titlescreen_texture = ac.load_texture("Assets/titlescreen.png")
-    ac.draw_texture_rectangle(
-        SC_WIDTH / 2, SC_HEIGHT / 2,
-        SC_WIDTH, SC_HEIGHT,
-        titlescreen_texture
-    )
-
-
-def draw_start_button():
-    button_texture = ac.load_texture("Assets/start_button.png")
-    ac.draw_texture_rectangle(
-        BUTTON_POS[0], BUTTON_POS[1],
-        button_width * button_scale_factor,
-        button_height * button_scale_factor,
-        button_texture
-    )
-
-
-def detect_mouse_motion(x, y, dx, dy):
-    global button_scale_factor, button_area_x, button_area_y
-    # Range of x-value of button
-    button_area_x = (
-            BUTTON_POS[0] - button_width / 2
-            <= x <=
-            BUTTON_POS[0] + button_width / 2
-    )
-    # Range of y-value of button
-    button_area_y = (
-            BUTTON_POS[1] - button_height / 2
-            <= y <=
-            BUTTON_POS[1] + button_height / 1
-    )
-
-    # Expand button when hovering
-    if button_area_x and button_area_y:
-        button_scale_factor += 0.5
-        # Button will not expand uncontrollably
-        if button_scale_factor >= 1.5:
-            button_scale_factor = 1.5
-
-    else:
-        button_scale_factor = 1
-
-
-def detect_mouse_release(x, y, button, modifiers):
-    global game_state, button_area_x, button_area_y
-    # A "click" is registered when mouse is released
-    if (
-            button_area_x and button_area_y and
-            button == ac.MOUSE_BUTTON_LEFT and
-            game_state is False
-    ):
-        game_state = True
-
-
 # All window related things
 def window_setup():
     ac.open_window(SC_WIDTH, SC_HEIGHT, SC_TITLE)
@@ -362,8 +305,6 @@ def window_setup():
     # Player input
     window = ac.get_window()
     window.on_key_press = keypress
-    window.on_mouse_motion = detect_mouse_motion
-    window.on_mouse_release = detect_mouse_release
 
     ac.run()
 
