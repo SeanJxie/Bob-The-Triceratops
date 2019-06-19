@@ -3,7 +3,11 @@ import random
 from Game import game_objects
 
 # TODO
-
+# Add more game-over objects
+# Add death system
+# Add score system
+# Add start menu
+# ...
 
 # Screen parameters
 SC_WIDTH = 1200
@@ -20,11 +24,11 @@ FLOOR = 50
 FLOOR_TILE_HEIGHT = 110
 FLOOR_TILE_WIDTH = 300
 
-# Game variables --------------------------------------------------------------
-player_x = 200
-player_y = 100
-jumping = False
+BUTTON_POS = [SC_WIDTH / 2, SC_HEIGHT / 2 - 100]
 
+# Game variables --------------------------------------------------------------
+# Used for starting/stopping the game
+game_state = False
 # Used to avoid jumping while not on floor
 in_air = True
 
@@ -35,12 +39,28 @@ screen_center = SC_WIDTH / 2
 # "Difficulty" of game
 game_speed = 10
 background_speed = game_speed / 1.1
+frame_count = 0
+
+# Player variables
+player_x = 200
+player_y = 100
+jumping = False
+hit_state = False
+# For the terrible "running" effect
+player_angle = 0
+running_speed = 4
+player_score = 0
 
 # x-value of tree is random
 # There is only one tree per floor "tile"
 tree_x = random.randint(SC_WIDTH, 2 * SC_WIDTH)
 # x-value of tree varies between 145px and 155px
 tree_y = random.randint(145, 155)
+
+# Button
+button_scale_factor = 1
+button_width = 100
+button_height = 50
 
 # Aesthetics variables --------------------------------------------------------
 # Amount and list of initial x-values of floor "tiles"
@@ -52,45 +72,71 @@ floor_x = \
     ]
 
 # Initial x_values of background "tiles"
-# There are only 2, no need for generator :)
-background_tiles = 2
-background_x = [SC_WIDTH / 2, SC_WIDTH / 2 + SC_WIDTH]
+background_tiles = 3
+background_x = \
+    [
+        SC_WIDTH / 2 + SC_WIDTH * k
+        for k in range(background_tiles)
+    ]
 
 
 # Constantly updating the functions
 def update(delta_time):
-    global screen_center, player_x
+    global frame_count
     ac.start_render()
 
-    # Rendering aesthetics
-    draw_background()
-    draw_floor()
-    draw_bob()
+    # If game is not playing, render titlescreen
+    if game_state is False:
+        draw_title_screen()
+        draw_start_button()
 
-    # Player interactions
-    floor_boundary(FLOOR)
-    gravity(GRAVITY_CONSTANT)
-    jump(jumping)
+    else:
+        # Rendering aesthetics
+        draw_background()
+        draw_floor()
+        draw_bob()
 
-    # Moving the player and the viewport
-    viewport(screen_center)
-    move_with_screen()
+        # Player interactions
+        floor_boundary(FLOOR)
+        gravity(GRAVITY_CONSTANT)
+        jump(jumping)
 
-    # Game mechanics
-    obstacles()
+        # Moving the player and the viewport
+        viewport(screen_center)
+        move_with_screen()
+
+        # Game mechanics
+        obstacles()
+        collision()
+        score()
+
+        frame_count += 1
 
 
 # PLAYER INTERACTION ----------------------------------------------------------
 # Player
 def draw_bob():
-    global bob
+    global bob, player_angle, running_speed
     # Bob Player object is drawn using the game_objects module
     bob = game_objects.PlayerObject(
         player_x, player_y,
-        PLAYER_WIDTH, PLAYER_HEIGHT, True
+        PLAYER_WIDTH, PLAYER_HEIGHT,
+        player_angle, True
     )
     bob.draw()
     bob.get_hit_box()
+
+    # The "running" effect
+    # the player rotates 20 degrees in direction
+    # for a complete range of 40 degrees
+    angle_cap = 20
+    if player_angle >= angle_cap:
+        running_speed = -running_speed
+
+    elif player_angle <= -angle_cap:
+        running_speed = -running_speed
+
+    player_angle += running_speed
 
 
 # Simulating the effect of gravity
@@ -159,7 +205,7 @@ def keypress(symbol, modifiers):
 
 # GAME MECHANICS --------------------------------------------------------------
 def obstacles():
-    global tree_x, tree_y
+    global tree_x, tree_y, tree
     tree = game_objects.TreeObject(tree_x, tree_y, True)
 
     tree.draw()
@@ -170,6 +216,43 @@ def obstacles():
     if tree_x <= screen_center - SC_WIDTH / 2:
         tree_x += random.randint(SC_WIDTH, 2 * SC_WIDTH)
         tree_y = random.randint(145, 155)
+
+
+def collision():
+    global hit_state
+    # Indices of hitbox sides
+    left = 0
+    right = 1
+    upper = 2
+    lower = 3
+
+    player_hitbox = bob.get_hit_box()
+    tree_hitbox = tree.get_hit_box()
+
+    # Front-side collision
+    # The only collision needed for trees
+    if ((player_hitbox[right] >= tree_hitbox[left])
+            and (player_hitbox[lower] <= tree_hitbox[upper])):
+        hit_state = True
+
+
+def score():
+    global player_score
+    # +1 point every 10 frames
+    if frame_count % 10 == 0:
+        player_score += 1
+
+    ac.draw_text(
+        f"Score: {player_score}",
+        screen_center - 600, 573,
+        ac.color.BLACK, 20
+    )
+
+
+def difficulty_progression():
+    global game_speed
+    if frame_count % 100:
+        game_speed += 2
 
 
 # AESTHETICS ------------------------------------------------------------------
@@ -203,12 +286,69 @@ def draw_background():
         )
 
         # Looping to front of screen when out of view
-        if background_x[i] <= screen_center - 2 * (SC_WIDTH / 2):
-            background_x[i] += 2 * SC_WIDTH
+        if background_x[i] <= screen_center - SC_WIDTH - 100:
+            background_x[i] += len(background_x) * SC_WIDTH
 
         # The background moves slowly (about 90% the speed of game_speed)
         # to the right, producing the effect of distance
         background_x[i] += background_speed
+
+
+# Title Screen ----------------------------------------------------------------
+def draw_title_screen():
+    titlescreen_texture = ac.load_texture("Assets/titlescreen.png")
+    ac.draw_texture_rectangle(
+        SC_WIDTH / 2, SC_HEIGHT / 2,
+        SC_WIDTH, SC_HEIGHT,
+        titlescreen_texture
+    )
+
+
+def draw_start_button():
+    button_texture = ac.load_texture("Assets/start_button.png")
+    ac.draw_texture_rectangle(
+        BUTTON_POS[0], BUTTON_POS[1],
+        button_width * button_scale_factor,
+        button_height * button_scale_factor,
+        button_texture
+    )
+
+
+def detect_mouse_motion(x, y, dx, dy):
+    global button_scale_factor, button_area_x, button_area_y
+    # Range of x-value of button
+    button_area_x = (
+            BUTTON_POS[0] - button_width / 2
+            <= x <=
+            BUTTON_POS[0] + button_width / 2
+    )
+    # Range of y-value of button
+    button_area_y = (
+            BUTTON_POS[1] - button_height / 2
+            <= y <=
+            BUTTON_POS[1] + button_height / 1
+    )
+
+    # Expand button when hovering
+    if button_area_x and button_area_y:
+        button_scale_factor += 0.5
+        # Button will not expand uncontrollably
+        if button_scale_factor >= 1.5:
+            button_scale_factor = 1.5
+
+    else:
+        button_scale_factor = 1
+
+
+def detect_mouse_release(x, y, button, modifiers):
+    global game_state, button_area_x, button_area_y
+    # A "click" is registered when mouse is released
+    if (
+            button_area_x and button_area_y and
+            button == ac.MOUSE_BUTTON_LEFT and
+            game_state is False
+    ):
+        game_state = True
 
 
 # All window related things
@@ -222,6 +362,8 @@ def window_setup():
     # Player input
     window = ac.get_window()
     window.on_key_press = keypress
+    window.on_mouse_motion = detect_mouse_motion
+    window.on_mouse_release = detect_mouse_release
 
     ac.run()
 
