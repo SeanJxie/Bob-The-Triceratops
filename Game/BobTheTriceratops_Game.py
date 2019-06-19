@@ -1,8 +1,9 @@
 import arcade as ac
-import Game_Objects
+import random
+from Game import game_objects
 
-# Create background textures
-# Create object class
+# TODO
+
 
 # Screen parameters
 SC_WIDTH = 1200
@@ -10,14 +11,14 @@ SC_HEIGHT = 600
 SC_TITLE = "Bob The Triceratops"
 
 # Constants
-PLAYER_LENGTH = 200
+PLAYER_WIDTH = 200
 PLAYER_HEIGHT = 100
 GRAVITY_CONSTANT = 1
 MAX_JUMP = 500
 FLOOR = 50
 
-PLATFORM_HEIGHT = 110
-PLATFORM_LENGTH = 300
+FLOOR_TILE_HEIGHT = 110
+FLOOR_TILE_WIDTH = 300
 
 # Game variables --------------------------------------------------------------
 player_x = 200
@@ -32,20 +33,41 @@ in_air = True
 screen_center = SC_WIDTH / 2
 
 # "Difficulty" of game
-game_speed = 1
+game_speed = 10
+background_speed = game_speed / 1.1
+
+# x-value of tree is random
+# There is only one tree per floor "tile"
+tree_x = random.randint(SC_WIDTH, 2 * SC_WIDTH)
+# x-value of tree varies between 145px and 155px
+tree_y = random.randint(145, 155)
 
 # Aesthetics variables --------------------------------------------------------
-# Amount and list of floor "tiles"
+# Amount and list of initial x-values of floor "tiles"
 floor_tiles = 8
-floor_x = [150 + 300 * k for k in range(floor_tiles)]
+floor_x = \
+    [
+        FLOOR_TILE_WIDTH / 2 + FLOOR_TILE_WIDTH * k
+        for k in range(floor_tiles)
+    ]
+
+# Initial x_values of background "tiles"
+# There are only 2, no need for generator :)
+background_tiles = 2
+background_x = [SC_WIDTH / 2, SC_WIDTH / 2 + SC_WIDTH]
 
 
 # Constantly updating the functions
 def update(delta_time):
     global screen_center, player_x
     ac.start_render()
+
+    # Rendering aesthetics
+    draw_background()
     draw_floor()
-    draw_bob(player_x, player_y)
+    draw_bob()
+
+    # Player interactions
     floor_boundary(FLOOR)
     gravity(GRAVITY_CONSTANT)
     jump(jumping)
@@ -54,8 +76,23 @@ def update(delta_time):
     viewport(screen_center)
     move_with_screen()
 
+    # Game mechanics
+    obstacles()
+
 
 # PLAYER INTERACTION ----------------------------------------------------------
+# Player
+def draw_bob():
+    global bob
+    # Bob Player object is drawn using the game_objects module
+    bob = game_objects.PlayerObject(
+        player_x, player_y,
+        PLAYER_WIDTH, PLAYER_HEIGHT, True
+    )
+    bob.draw()
+    bob.get_hit_box()
+
+
 # Simulating the effect of gravity
 def gravity(g_const):
     global player_y, velocity
@@ -120,31 +157,58 @@ def keypress(symbol, modifiers):
         jumping = True
 
 
+# GAME MECHANICS --------------------------------------------------------------
+def obstacles():
+    global tree_x, tree_y
+    tree = game_objects.TreeObject(tree_x, tree_y, True)
+
+    tree.draw()
+    tree.get_hit_box()
+
+    # If tree gets out of screen, reset it to a random x-value
+    # Ahead of the screen
+    if tree_x <= screen_center - SC_WIDTH / 2:
+        tree_x += random.randint(SC_WIDTH, 2 * SC_WIDTH)
+        tree_y = random.randint(145, 155)
+
+
 # AESTHETICS ------------------------------------------------------------------
-def draw_bob(x, y):
-    # Loading and drawing Bob
-    bob_texture = ac.load_texture("Assets/Bob.png")
-    ac.draw_texture_rectangle(
-        x, y,
-        PLAYER_LENGTH, PLAYER_HEIGHT,
-        bob_texture
-    )
-
-
 def draw_floor():
     floor_texture = ac.load_texture("Assets/floor.png")
 
+    # Drawing the floor tiles using floor_x list
     for i in range(floor_tiles):
         ac.draw_texture_rectangle(
             floor_x[i], FLOOR,
-            PLATFORM_LENGTH, PLATFORM_HEIGHT,
+            FLOOR_TILE_WIDTH, FLOOR_TILE_HEIGHT,
             floor_texture
         )
 
         # Check if a floor texture has moved off of the screen
         # If so reset it to "in front" of the viewing area
-        if floor_x[i] <= screen_center - SC_WIDTH / 2 - PLATFORM_LENGTH / 2:
+        if floor_x[i] <= screen_center - SC_WIDTH / 2 - FLOOR_TILE_WIDTH / 2:
             floor_x[i] += 2 * SC_WIDTH
+
+
+def draw_background():
+    background_texture = ac.load_texture("Assets/background.png")
+
+    # Same logic as draw_floor() function
+    # Except it's for a slower moving background
+    for i in range(background_tiles):
+        ac.draw_texture_rectangle(
+            background_x[i], SC_HEIGHT / 2,
+            SC_WIDTH, SC_HEIGHT,
+            background_texture
+        )
+
+        # Looping to front of screen when out of view
+        if background_x[i] <= screen_center - 2 * (SC_WIDTH / 2):
+            background_x[i] += 2 * SC_WIDTH
+
+        # The background moves slowly (about 90% the speed of game_speed)
+        # to the right, producing the effect of distance
+        background_x[i] += background_speed
 
 
 # All window related things
