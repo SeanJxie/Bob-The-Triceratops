@@ -12,7 +12,7 @@ from Game import game_objects
 # Screen parameters
 SC_WIDTH = 1200
 SC_HEIGHT = 600
-SC_TITLE = "Bob The Triceratops"
+SC_TITLE = "Bob The Triceratops - Development"
 
 # Constants
 PLAYER_WIDTH = 200
@@ -57,11 +57,6 @@ tree_x = random.randint(SC_WIDTH, 2 * SC_WIDTH)
 # x-value of tree varies between 145px and 155px
 tree_y = random.randint(145, 155)
 
-# Button
-button_scale_factor = 1
-button_width = 100
-button_height = 50
-
 # Aesthetics variables --------------------------------------------------------
 # Amount and list of initial x-values of floor "tiles"
 floor_tiles = 8
@@ -79,6 +74,18 @@ background_x = \
         for k in range(background_tiles)
     ]
 
+# For development purposes
+U = False
+D = False
+L = False
+R = False
+Z = False
+X = False
+
+dev_cam_pos = [SC_WIDTH / 2, SC_HEIGHT / 2]
+dev_cam_speed = 15
+dev_zoom_factor = 1
+
 
 # Constantly updating the functions
 def update(delta_time):
@@ -95,6 +102,7 @@ def update(delta_time):
     floor_boundary(FLOOR)
     gravity(GRAVITY_CONSTANT)
     jump(jumping)
+    dev_camera()
 
     if initial_jump:
         # Moving the player and the viewport
@@ -123,6 +131,7 @@ def draw_bob():
         player_angle
     )
     bob.draw()
+    bob.get_hit_box(visual=True)
 
 
 def running():
@@ -199,16 +208,57 @@ def floor_boundary(y_bound):
 
 
 def keypress(symbol, modifiers):
-    global jumping, initial_jump, game_state, U, D, L, R
+    global jumping, initial_jump, game_state, U, D, L, R, Z, X
     if symbol == ac.key.SPACE and not in_air:
         jumping = True
         initial_jump = True
+
+    if symbol == ac.key.UP:
+        U = True
+
+    if symbol == ac.key.DOWN:
+        D = True
+
+    if symbol == ac.key.LEFT:
+        L = True
+
+    if symbol == ac.key.RIGHT:
+        R = True
+
+    if symbol == ac.key.Z:
+        Z = True
+
+    if symbol == ac.key.X:
+        X = True
+
+
+# Development purposes
+def keyrelease(symbol, modifiers):
+    global U, L, D, R, Z, X
+
+    if symbol == ac.key.UP:
+        U = False
+
+    if symbol == ac.key.DOWN:
+        D = False
+
+    if symbol == ac.key.LEFT:
+        L = False
+
+    if symbol == ac.key.RIGHT:
+        R = False
+
+    if symbol == ac.key.Z:
+        Z = False
+
+    if symbol == ac.key.X:
+        X = False
 
 
 # GAME MECHANICS --------------------------------------------------------------
 def obstacles():
     global tree_x, tree_y, tree
-    tree = game_objects.TreeObject(tree_x, tree_y)
+    tree = game_objects.TreeObject(tree_x, tree_y, True)
 
     tree.draw()
     tree.get_hit_box()
@@ -309,6 +359,39 @@ def draw_background():
     )
 
 
+def dev_camera():
+    global dev_zoom_factor
+    ac.set_viewport(
+
+        dev_cam_pos[0] - SC_WIDTH / 2 * dev_zoom_factor,
+        dev_cam_pos[0] + SC_WIDTH / 2 * dev_zoom_factor,
+        dev_cam_pos[1] - SC_HEIGHT / 2 * dev_zoom_factor,
+        dev_cam_pos[1] + SC_HEIGHT / 2 * dev_zoom_factor
+
+    )
+
+    if U:
+        dev_cam_pos[1] += dev_cam_speed
+
+    if D:
+        dev_cam_pos[1] -= dev_cam_speed
+
+    if L:
+        dev_cam_pos[0] -= dev_cam_speed
+
+    if R:
+        dev_cam_pos[0] += dev_cam_speed
+
+    if Z:
+        dev_zoom_factor -= 0.075
+
+    if X:
+        dev_zoom_factor += 0.075
+
+    if dev_zoom_factor < 0:
+        dev_zoom_factor = 0.025
+
+
 # All window related things
 def window_setup():
     ac.open_window(SC_WIDTH, SC_HEIGHT, SC_TITLE)
@@ -320,6 +403,7 @@ def window_setup():
     # Player input
     window = ac.get_window()
     window.on_key_press = keypress
+    window.on_key_release = keyrelease
 
     ac.run()
 

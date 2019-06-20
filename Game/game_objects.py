@@ -7,13 +7,12 @@ Module for handling game objects which can cause a game-over
 
 
 class PlayerObject:
-    def __init__(self, x_pos, y_pos, width, height, angle, visual=False):
+    def __init__(self, x_pos, y_pos, width, height, angle=0):
         self.x = x_pos
         self.y = y_pos
         self.wt = width
         self.ht = height
         self.a = angle
-        self.vis = visual
 
     def draw(self):
         # Loading and drawing Bob
@@ -25,13 +24,13 @@ class PlayerObject:
             angle=self.a
         )
 
-    def get_hit_box(self):
+    def get_hit_box(self, visual=False):
         left_bound = self.x - self.wt / 2
         right_bound = self.x + self.wt / 2
         lower_bound = self.y - self.ht / 2
         upper_bound = self.y + self.ht / 2
 
-        if self.vis:
+        if visual:
             ac.draw_line(
                 right_bound,
                 self.y - self.ht / 2,
@@ -55,6 +54,9 @@ class PlayerObject:
                 self.y - self.ht / 2,
                 ac.color.RED
             )
+
+        ac.draw_text("Hey! you're not supposed to be here!", 100, -500,
+                     ac.color.BLACK, 100)
 
         # Returns hitbox as list
         return [left_bound, right_bound, upper_bound, lower_bound]
@@ -72,6 +74,7 @@ class TreeObject:
 
     def draw(self):
         tree_texture = ac.load_texture("Assets/tree.png")
+
         ac.draw_texture_rectangle(
             self.x, self.y,
             self.TREE_WIDTH,
