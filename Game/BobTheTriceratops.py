@@ -2,10 +2,6 @@ import arcade as ac
 import random
 from Game import game_objects
 
-# TODO
-# Add more game-over objects
-# Add death system
-# ...
 
 # Screen parameters
 SC_WIDTH = 1200
