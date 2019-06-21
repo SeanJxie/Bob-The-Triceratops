@@ -2,6 +2,10 @@ import arcade as ac
 import random
 from Game import game_objects
 
+# TODO
+# Add more game-over objects
+# Clean up
+# ...
 
 # Screen parameters
 SC_WIDTH = 1200
@@ -83,9 +87,13 @@ dev_zoom_factor = 1
 
 # Constantly updating the functions
 def update(delta_time):
-    global frame_count, game_speed, frame_count
-    global background_speed, running_speed
+    global frame_count
+
     ac.start_render()
+
+    # All values are reset when player is not playing
+    if game_state is False:
+        reset_values()
 
     # Rendering aesthetics
     draw_background()
@@ -98,7 +106,7 @@ def update(delta_time):
     jump(jumping)
     dev_camera()
 
-    if initial_jump:
+    if initial_jump and game_state:
         # Moving the player and the viewport
         viewport(screen_center)
         move_with_screen()
@@ -206,6 +214,7 @@ def keypress(symbol, modifiers):
     if symbol == ac.key.SPACE and not in_air:
         jumping = True
         initial_jump = True
+        game_state = True
 
     if symbol == ac.key.UP:
         U = True
@@ -275,10 +284,10 @@ def collision():
     player_hitbox = bob.get_hit_box()
     tree_hitbox = tree.get_hit_box()
 
-    # Front-side collision
-    # The only collision needed for trees
-    if ((player_hitbox[right] >= tree_hitbox[left])
-            and (player_hitbox[lower] <= tree_hitbox[upper])):
+    # Collision logic
+    if ((tree_hitbox[left] <= player_hitbox[right] <= tree_hitbox[right] or
+            tree_hitbox[left] <= player_hitbox[left] <= tree_hitbox[right]) and
+            tree_hitbox[upper] >= player_hitbox[lower]):
         game_state = False
 
 
@@ -297,9 +306,9 @@ def score():
 
 def difficulty_progression():
     global game_speed
-    # Every 100 frames, game accelerates by 1 px/s^2
+    # Every 100 frames, game accelerates by 0.15 px/s^2
     if frame_count % 100 == 0:
-        game_speed *= 1.02
+        game_speed += 0.15
 
 
 def move_background():
@@ -310,6 +319,34 @@ def move_background():
     # to the right, producing the effect of distance
     for i in range(background_tiles):
         background_x[i] += background_speed
+
+
+def reset_values():
+    global frame_count, game_speed, background_x, floor_x, tree_x
+    global screen_center, player_x, player_score, player_angle, tree_y
+
+    # The initial values when game is not being player
+    background_x = \
+        [
+            SC_WIDTH / 2 + SC_WIDTH * k
+            for k in range(background_tiles)
+        ]
+
+    floor_x = \
+        [
+            FLOOR_TILE_WIDTH / 2 + FLOOR_TILE_WIDTH * k
+            for k in range(floor_tiles)
+        ]
+
+    tree_x = random.randint(SC_WIDTH, 2 * SC_WIDTH)
+    tree_y = random.randint(145, 155)
+
+    screen_center = SC_WIDTH / 2
+    player_x = 200
+    game_speed = 10
+    frame_count = 0
+    player_score = 0
+    player_angle = 0
 
 
 # AESTHETICS ------------------------------------------------------------------

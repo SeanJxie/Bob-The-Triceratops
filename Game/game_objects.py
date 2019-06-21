@@ -25,7 +25,8 @@ class PlayerObject:
         )
 
     def get_hit_box(self, visual=False):
-        left_bound = self.x - self.wt / 2
+        # Reduced left boundary for easier game
+        left_bound = self.x - self.wt / 2 + 50
         right_bound = self.x + self.wt / 2
         lower_bound = self.y - self.ht / 2
         upper_bound = self.y + self.ht / 2
