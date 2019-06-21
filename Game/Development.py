@@ -2,11 +2,6 @@ import arcade as ac
 import random
 from Game import game_objects
 
-# TODO
-# Add more game-over objects
-# Clean up
-# ...
-
 # Screen parameters
 SC_WIDTH = 1200
 SC_HEIGHT = 600
@@ -50,10 +45,11 @@ player_score = 0
 initial_jump = False
 
 # x-value of tree is random
-# There is only one tree per floor "tile"
+# There is only one tree per floor segment
 tree_x = random.randint(SC_WIDTH, 2 * SC_WIDTH)
 # x-value of tree varies between 145px and 155px
 tree_y = random.randint(145, 155)
+
 
 # Aesthetics variables --------------------------------------------------------
 # Amount and list of initial x-values of floor "tiles"
@@ -133,7 +129,7 @@ def draw_bob():
         player_angle
     )
     bob.draw()
-    bob.get_hit_box(visual=True)
+    bob.get_hit_box(visual_hitbox=True)
 
 
 def running():
@@ -261,11 +257,10 @@ def keyrelease(symbol, modifiers):
 # GAME MECHANICS --------------------------------------------------------------
 def obstacles():
     global tree_x, tree_y, tree
-    tree = game_objects.TreeObject(tree_x, tree_y, True)
+    tree = game_objects.TreeObject(tree_x, tree_y)
 
     tree.draw()
-    tree.get_hit_box()
-
+    tree.get_hit_box(visual_hitbox=True)
     # If tree gets out of screen, reset it to a random x-value
     # Ahead of the screen
     if tree_x <= screen_center - SC_WIDTH / 2:
@@ -285,9 +280,12 @@ def collision():
     tree_hitbox = tree.get_hit_box()
 
     # Collision logic
-    if ((tree_hitbox[left] <= player_hitbox[right] <= tree_hitbox[right] or
-            tree_hitbox[left] <= player_hitbox[left] <= tree_hitbox[right]) and
-            tree_hitbox[upper] >= player_hitbox[lower]):
+    if (tree_hitbox[left] <= player_hitbox[right] <= tree_hitbox[right]
+        or
+        (tree_hitbox[left] <= player_hitbox[left] <= tree_hitbox[right]
+         ))\
+        and\
+        (tree_hitbox[upper] >= player_hitbox[lower]):
         game_state = False
 
 
@@ -315,7 +313,7 @@ def move_background():
     # A separate function from draw_background() for easy
     # disable of background movement
 
-    # The background moves slowly(about 90% the speed of game_speed)
+    # The background moves slowly
     # to the right, producing the effect of distance
     for i in range(background_tiles):
         background_x[i] += background_speed

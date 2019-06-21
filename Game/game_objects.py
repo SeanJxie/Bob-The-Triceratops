@@ -24,14 +24,14 @@ class PlayerObject:
             angle=self.a
         )
 
-    def get_hit_box(self, visual=False):
+    def get_hit_box(self, visual_hitbox=False):
         # Reduced left boundary for easier game
         left_bound = self.x - self.wt / 2 + 50
         right_bound = self.x + self.wt / 2
         lower_bound = self.y - self.ht / 2
         upper_bound = self.y + self.ht / 2
 
-        if visual:
+        if visual_hitbox:
             ac.draw_line(
                 right_bound,
                 self.y - self.ht / 2,
@@ -64,10 +64,9 @@ class PlayerObject:
 
 
 class TreeObject:
-    def __init__(self, x_pos, y_pos, visual=False):
+    def __init__(self, x_pos, y_pos):
         self.x = x_pos
         self.y = y_pos
-        self.vis = visual
 
         # Constants
         self.TREE_HEIGHT = 150
@@ -83,12 +82,12 @@ class TreeObject:
             tree_texture
         )
 
-    def get_hit_box(self):
+    def get_hit_box(self, visual_hitbox=False):
         left_bound = self.x - self.TREE_WIDTH / 2
         right_bound = self.x + self.TREE_WIDTH / 2
         upper_bound = self.y + self.TREE_HEIGHT / 2
 
-        if self.vis:
+        if visual_hitbox:
             ac.draw_line(
                 left_bound,
                 self.y - self.TREE_HEIGHT / 2,
@@ -115,3 +114,4 @@ class TreeObject:
 
         # Returns hitbox as list
         return [left_bound, right_bound, upper_bound]
+

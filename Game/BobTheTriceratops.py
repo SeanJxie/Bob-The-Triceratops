@@ -2,17 +2,10 @@ import arcade as ac
 import random
 from Game import game_objects
 
-# TODO
-# Add more game-over objects
-# Add death system
-# Add score system
-# Add start menu
-# ...
-
 # Screen parameters
 SC_WIDTH = 1200
 SC_HEIGHT = 600
-SC_TITLE = "Bob The Triceratops"
+SC_TITLE = "Bob The Triceratops - Development"
 
 # Constants
 PLAYER_WIDTH = 200
@@ -52,15 +45,10 @@ player_score = 0
 initial_jump = False
 
 # x-value of tree is random
-# There is only one tree per floor "tile"
+# There is only one tree per floor segment
 tree_x = random.randint(SC_WIDTH, 2 * SC_WIDTH)
 # x-value of tree varies between 145px and 155px
 tree_y = random.randint(145, 155)
-
-# Button
-button_scale_factor = 1
-button_width = 100
-button_height = 50
 
 # Aesthetics variables --------------------------------------------------------
 # Amount and list of initial x-values of floor "tiles"
@@ -82,9 +70,13 @@ background_x = \
 
 # Constantly updating the functions
 def update(delta_time):
-    global frame_count, game_speed, frame_count
-    global background_speed, running_speed
+    global frame_count
+
     ac.start_render()
+
+    # All values are reset when player is not playing
+    if game_state is False:
+        reset_values()
 
     # Rendering aesthetics
     draw_background()
@@ -96,7 +88,7 @@ def update(delta_time):
     gravity(GRAVITY_CONSTANT)
     jump(jumping)
 
-    if initial_jump:
+    if initial_jump and game_state:
         # Moving the player and the viewport
         viewport(screen_center)
         move_with_screen()
@@ -123,6 +115,7 @@ def draw_bob():
         player_angle
     )
     bob.draw()
+    bob.get_hit_box(visual_hitbox=True)
 
 
 def running():
@@ -203,6 +196,7 @@ def keypress(symbol, modifiers):
     if symbol == ac.key.SPACE and not in_air:
         jumping = True
         initial_jump = True
+        game_state = True
 
 
 # GAME MECHANICS --------------------------------------------------------------
@@ -211,8 +205,7 @@ def obstacles():
     tree = game_objects.TreeObject(tree_x, tree_y)
 
     tree.draw()
-    tree.get_hit_box()
-
+    tree.get_hit_box(visual_hitbox=True)
     # If tree gets out of screen, reset it to a random x-value
     # Ahead of the screen
     if tree_x <= screen_center - SC_WIDTH / 2:
@@ -231,10 +224,13 @@ def collision():
     player_hitbox = bob.get_hit_box()
     tree_hitbox = tree.get_hit_box()
 
-    # Front-side collision
-    # The only collision needed for trees
-    if ((player_hitbox[right] >= tree_hitbox[left])
-            and (player_hitbox[lower] <= tree_hitbox[upper])):
+    # Collision logic
+    if (tree_hitbox[left] <= player_hitbox[right] <= tree_hitbox[right]
+        or
+        (tree_hitbox[left] <= player_hitbox[left] <= tree_hitbox[right]
+        )) \
+            and \
+            (tree_hitbox[upper] >= player_hitbox[lower]):
         game_state = False
 
 
@@ -253,19 +249,47 @@ def score():
 
 def difficulty_progression():
     global game_speed
-    # Every 100 frames, game accelerates by 1 px/s^2
+    # Every 100 frames, game accelerates by 0.15 px/s^2
     if frame_count % 100 == 0:
-        game_speed *= 1.02
+        game_speed += 0.15
 
 
 def move_background():
     # A separate function from draw_background() for easy
     # disable of background movement
 
-    # The background moves slowly(about 90% the speed of game_speed)
+    # The background moves slowly
     # to the right, producing the effect of distance
     for i in range(background_tiles):
         background_x[i] += background_speed
+
+
+def reset_values():
+    global frame_count, game_speed, background_x, floor_x, tree_x
+    global screen_center, player_x, player_score, player_angle, tree_y
+
+    # The initial values when game is not being player
+    background_x = \
+        [
+            SC_WIDTH / 2 + SC_WIDTH * k
+            for k in range(background_tiles)
+        ]
+
+    floor_x = \
+        [
+            FLOOR_TILE_WIDTH / 2 + FLOOR_TILE_WIDTH * k
+            for k in range(floor_tiles)
+        ]
+
+    tree_x = random.randint(SC_WIDTH, 2 * SC_WIDTH)
+    tree_y = random.randint(145, 155)
+
+    screen_center = SC_WIDTH / 2
+    player_x = 200
+    game_speed = 10
+    frame_count = 0
+    player_score = 0
+    player_angle = 0
 
 
 # AESTHETICS ------------------------------------------------------------------
@@ -320,6 +344,7 @@ def window_setup():
     # Player input
     window = ac.get_window()
     window.on_key_press = keypress
+    window.on_key_release = keyrelease
 
     ac.run()
 
