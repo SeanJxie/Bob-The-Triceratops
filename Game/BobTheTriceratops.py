@@ -2,6 +2,12 @@ import arcade as ac
 import random
 from Game import game_objects
 
+# TODO
+# Add more game-over objects
+# Add death system
+# Add score system
+# Add start menu
+# ...
 
 # Screen parameters
 SC_WIDTH = 1200
@@ -193,7 +199,7 @@ def floor_boundary(y_bound):
 
 
 def keypress(symbol, modifiers):
-    global jumping, initial_jump, game_state, U, D, L, R
+    global jumping, initial_jump, game_state
     if symbol == ac.key.SPACE and not in_air:
         jumping = True
         initial_jump = True
