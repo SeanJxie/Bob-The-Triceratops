@@ -1,2 +1,2 @@
 # Bob-The-Triceratops
-Currently incomplete
+A half-effort game mode for the fun of it.
