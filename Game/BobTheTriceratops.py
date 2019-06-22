@@ -115,7 +115,6 @@ def draw_bob():
         player_angle
     )
     bob.draw()
-    bob.get_hit_box(visual_hitbox=True)
 
 
 def running():
@@ -205,7 +204,6 @@ def obstacles():
     tree = game_objects.TreeObject(tree_x, tree_y)
 
     tree.draw()
-    tree.get_hit_box(visual_hitbox=True)
     # If tree gets out of screen, reset it to a random x-value
     # Ahead of the screen
     if tree_x <= screen_center - SC_WIDTH / 2:
