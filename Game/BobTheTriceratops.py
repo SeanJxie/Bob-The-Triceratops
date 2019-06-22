@@ -344,7 +344,6 @@ def window_setup():
     # Player input
     window = ac.get_window()
     window.on_key_press = keypress
-    window.on_key_release = keyrelease
 
     ac.run()
 
