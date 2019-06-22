@@ -5,7 +5,7 @@ from Game import game_objects
 # Screen parameters
 SC_WIDTH = 1200
 SC_HEIGHT = 600
-SC_TITLE = "Bob The Triceratops - Development"
+SC_TITLE = "Bob The Triceratops"
 
 # Constants
 PLAYER_WIDTH = 200
