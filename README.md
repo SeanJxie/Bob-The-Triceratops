@@ -1,3 +1,3 @@
 # Bob-The-Triceratops
-Whole project made in half-effort spirit.
-No flame plz
+It turns out there are still many glitches. However, it is playable... kind of.
+I swear it's a feature of the "intentionally terrible" style of the game, not a bug.
