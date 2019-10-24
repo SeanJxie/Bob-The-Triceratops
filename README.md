@@ -1,9 +1,8 @@
 # Bob-The-Triceratops
-There are many glitches. Still, it is playable... kind of.
-- I swear it's a feature of the "intentionally terrible" style of the game, not a bug. :)
+Not bugs. Features.
 
 # Run
-- Uses the Arcade Game Library (http://arcade.academy/). So, 
+- Uses the Arcade Game Library (http://arcade.academy/).
 ```
 pip install arcade
 ```
