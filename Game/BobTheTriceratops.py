@@ -248,8 +248,8 @@ def score():
 def difficulty_progression():
     global game_speed
     # Every 100 frames, game accelerates by 0.15 px/s^2
-    if frame_count % 100 == 0:
-        game_speed += 0.15
+    if frame_count % 500 == 0:
+        game_speed += 1
 
 
 def move_background():
@@ -332,7 +332,7 @@ def draw_background():
 
 
 # All window related things
-def window_setup():
+def main():
     ac.open_window(SC_WIDTH, SC_HEIGHT, SC_TITLE)
     ac.set_background_color([153, 217, 234])
 
@@ -346,4 +346,5 @@ def window_setup():
     ac.run()
 
 
-window_setup()
+if __name__ == '__main__':
+    main()
